@@ -6,22 +6,20 @@ const JsBridge = function() {
 }
 
 JsBridge.prototype = {
-    init: function() {
+    init: () => {
         this.iOS = ! /android/.test(this.win.navigator.userAgent.toLowerCase());
     },
 
-    iOSHandler: function(method, params, cb) {
-        this.setupWebViewJavascriptBridge(function(bridge) {
-            bridge.callHandler(method, params, function (responseData) {
+    iOSHandler: (method, params, cb) => {
+        this.setupWebViewJavascriptBridge((bridge) => {
+            bridge.callHandler(method, params, (responseData) => {
                 typeof cb === 'function' && cb.apply(this.win, arguments);
             });
         });
     },
 
-    androidHandler: function(method, params, cb) {
-        this.win.WebViewJavascriptBridge.callHandler(
-            method, params,
-            function(responseData) {
+    androidHandler: (method, params, cb) => {
+        this.win.WebViewJavascriptBridge.callHandler(method, params, (responseData) => {
                 typeof cb === 'function' && cb.apply(this.win, arguments);
             }
         );
@@ -33,7 +31,7 @@ JsBridge.prototype = {
         params: 参数
         cb：回调函数
     */
-    exec: function(method, params, cb) {
+    exec: (method, params, cb) => {
         params = params || {};
         try {
             this.iOS ?
@@ -45,7 +43,7 @@ JsBridge.prototype = {
     },
 
 
-    setupWebViewJavascriptBridge: function(callback) {
+    setupWebViewJavascriptBridge: (callback) => {
         if (this.win.WebViewJavascriptBridge) { return callback(WebViewJavascriptBridge); }
         if (this.win.WVJBCallbacks) { return this.win.WVJBCallbacks.push(callback); }
         this.win.WVJBCallbacks = [callback];
@@ -53,33 +51,33 @@ JsBridge.prototype = {
         WVJBIframe.style.display = 'none';
         WVJBIframe.src = 'https://__bridge_loaded__';
         document.documentElement.appendChild(WVJBIframe);
-        setTimeout(function() { document.documentElement.removeChild(WVJBIframe) }, 0)
+        setTimeout(() => { document.documentElement.removeChild(WVJBIframe) }, 0)
     },
 
-    iOSAddEvent: function(method, handler) {
-        this.setupWebViewJavascriptBridge(function(bridge) {
-            bridge.registerHandler(method, function(data, responseCallback) {
+    iOSAddEvent: (method, handler) => {
+        this.setupWebViewJavascriptBridge((bridge) => {
+            bridge.registerHandler(method, (data, responseCallback) => {
                 responseCallback(data);
                 typeof handler === 'function' && handler.apply(this.win, arguments);
             })
         })
     },
 
-    connectWebViewJavascriptBridge: function(callback) {
+    connectWebViewJavascriptBridge: (callback) => {
         if (this.win.WebViewJavascriptBridge) {
             typeof callback === 'function' && callback.call(this.win, this.win.WebViewJavascriptBridge);
         } else {
-            document.addEventListener('WebViewJavascriptBridgeReady', function() {
+            document.addEventListener('WebViewJavascriptBridgeReady', () => {
                 typeof callback === 'function' && callback.call(this.win, this.win.WebViewJavascriptBridge);
             },false);
         }
     },
 
-    androidAddEvent: function(method, handler) {
-        this.connectWebViewJavascriptBridge(function(bridge) {
+    androidAddEvent: (method, handler) => {
+        this.connectWebViewJavascriptBridge((bridge) => {
             try {
                 if (!this.win.WebViewJavascriptBridge._messageHandler) {
-                    bridge.init(function(message, responseCallback) {
+                    bridge.init((message, responseCallback) => {
                         responseCallback(data);
                     });
                 }
@@ -87,7 +85,7 @@ JsBridge.prototype = {
                 console.warn(e);
             }
 
-            bridge.registerHandler(method, function(data, responseCallback) {
+            bridge.registerHandler(method, (data, responseCallback) => {
                 responseCallback(data);
                 typeof handler === 'function' && handler.apply(this.win, arguments);
             });
@@ -101,7 +99,7 @@ JsBridge.prototype = {
         method: 客户端调用方法名,
         handler：函数体
     */
-    addEventListener: function(method, handler) {
+    addEventListener: (method, handler) => {
         try {
             this.iOS ? 
                 this.iOSAddEvent(method, handler) :
